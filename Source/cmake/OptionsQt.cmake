@@ -11,6 +11,44 @@ set(PROJECT_VERSION_PATCH 0)
 set(PROJECT_VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH})
 set(PROJECT_VERSION_STRING "${PROJECT_VERSION}")
 
+if (RUN_CONAN)
+    set(_BACKUP_CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH})
+
+    include(conan)
+    conan_check()
+    conan_add_remote(NAME qtproject   INDEX 0 URL https://api.bintray.com/conan/qtproject/conan)
+    conan_add_remote(NAME bincrafters INDEX 1 URL https://api.bintray.com/conan/bincrafters/public-conan)
+    # TODO: Set jpeg, png, sqlite version depending on Qt version
+    # TODO: Add optional dependencies for ENABLE_WEBP, etc.
+    # TODO: Use static libraries for static build
+    conan_cmake_run(
+        REQUIRES
+            icu/64.2@qtproject/stable
+            libxml2/2.9.9@qtproject/stable
+            libxslt/1.1.33@qtproject/stable
+            zlib/1.2.11@qtproject/stable
+            libjpeg-turbo/2.0.2@qtproject/stable
+            libpng/1.6.37@bincrafters/stable
+            sqlite3/3.29.0@bincrafters/stable
+        OPTIONS
+            icu:shared=True
+            icu:data_packaging=library
+            libxml2:shared=True
+            libxml2:iconv=False
+            libxml2:icu=True
+            libxslt:shared=True
+            libjpeg-turbo:shared=False
+            zlib:shared=False
+            libpng:shared=False
+            sqlite3:shared=False
+        BASIC_SETUP
+        BUILD_TYPE "Release"
+        BUILD outdated)
+
+    set(CMAKE_MODULE_PATH ${_BACKUP_CMAKE_MODULE_PATH})
+    unset(_BACKUP_CMAKE_MODULE_PATH)
+endif ()
+
 set(QT_CONAN_DIR "" CACHE PATH "Directory containing conanbuildinfo.cmake and conanfile.txt")
 if (QT_CONAN_DIR)
     find_program(CONAN_COMMAND NAMES conan PATHS $ENV{PIP3_PATH})
