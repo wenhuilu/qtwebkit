@@ -38,12 +38,16 @@
 #endif
 #endif
 
+#if USE(CF)
+#include <CoreFoundation/CoreFoundation.h>
+#endif
+
 #if OS(WINDOWS)
 typedef HMODULE PlatformModule;
 
 #elif PLATFORM(QT)
 
-#if defined(Q_OS_MACOS)
+#if defined(Q_OS_MACOS) && USE(CF)
 typedef CFBundleRef PlatformModule;
 #elif !defined(QT_NO_LIBRARY)
 typedef QLibrary* PlatformModule;
@@ -84,7 +88,6 @@ inline void unloadModule(PlatformModule module)
 {
 #if defined(Q_OS_MACOS)
     CFRelease(module);
-    return true;
 #elif !defined(QT_NO_LIBRARY)
     module->unload();
     delete module;
