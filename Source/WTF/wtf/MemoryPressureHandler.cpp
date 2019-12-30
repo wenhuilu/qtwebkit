@@ -55,7 +55,7 @@ MemoryPressureHandler::MemoryPressureHandler()
     : m_windowsMeasurementTimer(RunLoop::main(), this, &MemoryPressureHandler::windowsMeasurementTimerFired)
 #endif
 {
-#if PLATFORM(COCOA)
+#if PLATFORM(COCOA) || (PLATFORM(QT) && OS(DARWIN))
     setDispatchQueue(dispatch_get_main_queue());
 #endif
 }
@@ -301,7 +301,7 @@ void MemoryPressureHandler::ReliefLogger::logMemoryUsageChange()
 void MemoryPressureHandler::platformInitialize() { }
 #endif
 
-#if PLATFORM(COCOA)
+#if PLATFORM(COCOA) || (PLATFORM(QT) && OS(DARWIN))
 void MemoryPressureHandler::setDispatchQueue(dispatch_queue_t queue)
 {
     RELEASE_ASSERT(!m_installed);

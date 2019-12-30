@@ -3117,7 +3117,7 @@ int jscmain(int argc, char** argv)
     if (!gigacageDisableRequested)
         Gigacage::forbidDisablingPrimitiveGigacage();
 
-#if PLATFORM(COCOA)
+#if PLATFORM(COCOA) || (PLATFORM(QT) && OS(DARWIN))
     auto& memoryPressureHandler = MemoryPressureHandler::singleton();
     {
         dispatch_queue_t queue = dispatch_queue_create("jsc shell memory pressure handler", DISPATCH_QUEUE_SERIAL);

@@ -91,7 +91,7 @@ public:
 
     WTF_EXPORT_PRIVATE static MemoryUsagePolicy currentMemoryUsagePolicy();
 
-#if PLATFORM(COCOA)
+#if PLATFORM(COCOA) || (PLATFORM(QT) && OS(DARWIN))
     WTF_EXPORT_PRIVATE void setDispatchQueue(dispatch_queue_t);
 #endif
 
@@ -205,7 +205,7 @@ private:
     void holdOffTimerFired();
 #endif
 
-#if PLATFORM(COCOA)
+#if PLATFORM(COCOA) || (PLATFORM(QT) && OS(DARWIN))
     dispatch_queue_t m_dispatchQueue { nullptr };
 #endif
 };
