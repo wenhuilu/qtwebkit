@@ -150,7 +150,7 @@ if (ENABLE_WEBCORE)
         WebCoreTestSupport
         gtest
     )
-    if (NOT APPLE)
+    if (NOT APPLE OR ${PORT} STREQUAL "Qt")
         list(APPEND TestWebCore_LIBRARIES WebCore)
     endif ()
 
