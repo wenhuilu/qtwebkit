@@ -22,7 +22,6 @@
 
 #include <QGraphicsScene>
 #include <QGraphicsView>
-#include <WebCore/Widget.h>
 
 #if defined(Q_WS_X11)
 #include <QX11Info>
@@ -144,9 +143,9 @@ QRectF PageClientQWidget::windowRect() const
     return QRectF(view->window()->frameGeometry());
 }
 
-void PageClientQWidget::setWidgetVisible(Widget* widget, bool visible)
+void PageClientQWidget::setWidgetVisible(QObject* widget, bool visible)
 {
-    QWidget* qtWidget = qobject_cast<QWidget*>(widget->platformWidget());
+    QWidget* qtWidget = qobject_cast<QWidget*>(widget);
     if (!qtWidget)
         return;
     qtWidget->setVisible(visible);
@@ -321,7 +320,7 @@ QStyle* PageClientQGraphicsWidget::style() const
     return view->style();
 }
 
-void PageClientQGraphicsWidget::setWidgetVisible(Widget*, bool)
+void PageClientQGraphicsWidget::setWidgetVisible(QObject*, bool)
 {
     // Doesn't make sense, does it?
 }

@@ -76,7 +76,7 @@ public:
 
     QRectF windowRect() const final;
 
-    void setWidgetVisible(Widget*, bool visible) final;
+    void setWidgetVisible(QObject*, bool visible) final;
     bool isViewVisible() final;
 
     QWidget* view;
@@ -160,7 +160,7 @@ public:
 
     bool viewResizesToContentsEnabled() const final { return viewResizesToContents; }
 
-    void setWidgetVisible(Widget*, bool) final;
+    void setWidgetVisible(QObject*, bool) final;
     bool isViewVisible() final;
 
 #if USE(TILED_BACKING_STORE)

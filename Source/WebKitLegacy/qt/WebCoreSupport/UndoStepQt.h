@@ -21,9 +21,12 @@
 #define UndoStepQt_h
 
 #include <QString>
-#include <WebCore/UndoStep.h>
 #include <qwebkitglobal.h>
 #include <wtf/Ref.h>
+
+namespace WebCore {
+class UndoStep;
+}
 
 class QWEBKIT_EXPORT UndoStepQt  {
 public:

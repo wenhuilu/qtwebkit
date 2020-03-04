@@ -81,7 +81,7 @@ void Widget::show()
 
     QWebPageClient* client = root()->hostWindow()->platformPageClient();
     if (client)
-        client->setWidgetVisible(this, true);
+        client->setWidgetVisible(platformWidget(), true);
 }
 
 void Widget::hide()
@@ -93,7 +93,7 @@ void Widget::hide()
 
     QWebPageClient* client = root()->hostWindow()->platformPageClient();
     if (client)
-        client->setWidgetVisible(this, false);
+        client->setWidgetVisible(platformWidget(), false);
 }
 
 void Widget::paint(GraphicsContext&, const IntRect&, SecurityOriginPaintPolicy)

@@ -19,6 +19,7 @@
 
 #include "UndoStepQt.h"
 
+#include <WebCore/UndoStep.h>
 #include <qobject.h>
 
 using namespace WebCore;

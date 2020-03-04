@@ -39,10 +39,6 @@ class QStyle;
 class QWindow;
 QT_END_NAMESPACE
 
-namespace WebCore {
-class Widget;
-}
-
 class QWebPageClient {
 public:
     virtual ~QWebPageClient() { }
@@ -93,7 +89,7 @@ public:
 
     virtual QRectF windowRect() const = 0;
 
-    virtual void setWidgetVisible(WebCore::Widget*, bool visible) = 0;
+    virtual void setWidgetVisible(QObject*, bool visible) = 0;
 
     virtual QWindow* ownerWindow() const;
 
