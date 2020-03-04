@@ -30,9 +30,11 @@
 #include <wtf/RetainPtr.h>
 #include <wtf/text/WTFString.h>
 
+#if PLATFORM(COCOA)
 OBJC_CLASS NSAttributedString;
 OBJC_CLASS NSURL;
 OBJC_CLASS SSBServiceLookupResult;
+#endif
 
 namespace WebKit {
 

@@ -44,9 +44,11 @@
 #include "InstanceMethodSwizzler.h"
 #endif
 
+#if PLATFORM(COCOA)
 OBJC_CLASS NSString;
 OBJC_CLASS UIKeyboardInputMode;
 OBJC_CLASS WKWebViewConfiguration;
+#endif
 
 namespace WTR {
 
