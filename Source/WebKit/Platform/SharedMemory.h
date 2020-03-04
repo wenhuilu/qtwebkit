@@ -44,7 +44,8 @@ class Decoder;
 class Encoder;
 }
 
-#if OS(DARWIN)
+#if OS(DARWIN) && !USE(UNIX_DOMAIN_SOCKETS)
+#include <mach/mach_port.h>
 namespace WTF {
 class MachSendRight;
 }

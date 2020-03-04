@@ -35,7 +35,7 @@
 #include <wtf/text/WTFString.h>
 #include <wtf/threads/BinarySemaphore.h>
 
-#if PLATFORM(COCOA)
+#if PLATFORM(COCOA) || (PLATFORM(QT) && USE(MACH_PORTS))
 #include "MachMessage.h"
 #endif
 
@@ -45,7 +45,7 @@
 
 namespace IPC {
 
-#if PLATFORM(COCOA)
+#if PLATFORM(COCOA) || (PLATFORM(QT) && USE(MACH_PORTS))
 // The IPC connection gets killed if the incoming message queue reaches 50000 messages before the main thread has a chance to dispatch them.
 const size_t maxPendingIncomingMessagesKillingThreshold { 50000 };
 #endif
@@ -900,7 +900,7 @@ void Connection::enqueueIncomingMessage(std::unique_ptr<Decoder> incomingMessage
     {
         std::lock_guard<Lock> lock(m_incomingMessagesMutex);
 
-#if PLATFORM(COCOA)
+#if PLATFORM(COCOA) || (PLATFORM(QT) && USE(MACH_PORTS))
         if (m_wasKilled)
             return;
 
@@ -1091,7 +1091,7 @@ void Connection::dispatchIncomingMessages()
         messagesToProcess = m_incomingMessagesThrottler->numberOfMessagesToProcess(m_incomingMessages.size());
         if (messagesToProcess < m_incomingMessages.size()) {
             RELEASE_LOG_ERROR(IPC, "%p - Connection::dispatchIncomingMessages: IPC throttling was triggered (has %zu pending incoming messages, will only process %zu before yielding)", this, m_incomingMessages.size(), messagesToProcess);
-#if PLATFORM(COCOA)
+#if PLATFORM(COCOA) || (PLATFORM(QT) && USE(MACH_PORTS))
             RELEASE_LOG_ERROR(IPC, "%p - Connection::dispatchIncomingMessages: first IPC message in queue is %{public}s::%{public}s", this, message->messageReceiverName().toString().data(), message->messageName().toString().data());
 #endif
         }

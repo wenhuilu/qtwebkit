@@ -294,7 +294,7 @@ private:
 
     Seconds timeoutRespectingIgnoreTimeoutsForTesting(Seconds) const;
 
-#if PLATFORM(COCOA)
+#if PLATFORM(COCOA) || (PLATFORM(QT) && USE(MACH_PORTS))
     bool sendMessage(std::unique_ptr<MachMessage>);
 #endif
 

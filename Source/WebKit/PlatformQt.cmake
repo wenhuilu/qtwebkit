@@ -209,12 +209,14 @@ list(APPEND WebKit_SOURCES
 if (USE_MACH_PORTS)
     list(APPEND WebKit_INCLUDE_DIRECTORIES
         "${WEBKIT_DIR}/Platform/IPC/cocoa"
+        "${WEBKIT_DIR}/Platform/cocoa"
         "${WEBKIT_DIR}/Platform/mac"
     )
     list(APPEND WebKit_SOURCES
         Platform/IPC/cocoa/ConnectionCocoa.mm
 
         Platform/cocoa/SharedMemoryCocoa.cpp
+        Platform/cocoa/WKCrashReporter.mm
 
         Platform/mac/MachUtilities.cpp
     )

@@ -25,7 +25,7 @@
 
 #pragma once
 
-#if PLATFORM(COCOA)
+#if PLATFORM(COCOA) || (PLATFORM(QT) && USE(MACH_PORTS))
 
 #include <mach/message.h>
 #include <memory>
