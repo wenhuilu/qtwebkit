@@ -56,6 +56,7 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         sudo apt-get update && sudo apt-get install \
+        ccache \
         build-essential bison flex gperf libfontconfig1-dev libgl1-mesa-dev libglib2.0-dev libgstreamer-plugins-base1.0-dev libgstreamer1.0-dev libhyphen-dev libicu-dev libjpeg-dev libpng-dev libqt5opengl5-dev libqt5sensors5-dev libqt5webchannel5-dev libsqlite3-dev libwebp-dev libwoff-dev libxcomposite-dev libxml2-dev libxrender-dev libxslt1-dev mesa-common-dev pkg-config python3 qtbase5-private-dev qtdeclarative5-private-dev qtpositioning5-dev ruby libqt5sql5-sqlite qtbase5-doc-html qttools5-dev-tools \
         libtasn1-6-dev libgcrypt20-dev
         # excluded cmake and ninja-build which are normally required
@@ -189,6 +190,7 @@ jobs:
 
     - name: Download ccache
       id: ccache
+      if: runner.os != 'Linux'
       shell: cmake -P {0}
       run: |
         set(ccache_url "https://github.com/cristianadam/ccache/releases/download/v$ENV{CCACHE_VERSION}/${{ runner.os }}.tar.xz")
