@@ -209,6 +209,9 @@ jobs:
       with:
         path: .ccache
         key: ${{ matrix.config.name }}-ccache-${{ env.CACHE_PARTITION }}-${{ steps.ccache_cache_timestamp.outputs.timestamp }}
+        restore-keys: |
+          ${{ matrix.config.name }}-ccache-${{ env.CACHE_PARTITION }}-
+
 
     - name: Configure
       shell: bash
