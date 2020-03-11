@@ -24,22 +24,10 @@ jobs:
       matrix:
         config:
         - {
-            name: "Ubuntu GCC Release", artifact: "Linux",
-            os: ubuntu-latest,
-            build_type: Release,
-            cc: "gcc", cxx: "g++"
-          }
-        - {
             name: "Ubuntu GCC Debug", artifact: "Linux",
             os: ubuntu-latest,
             build_type: Debug,
             cc: "gcc", cxx: "g++"
-          }
-        - {
-            name: "macOS Clang Release", artifact: "macOS",
-            os: macos-latest,
-            build_type: Release,
-            cc: "clang", cxx: "clang++"
           }
 
     steps:
@@ -219,8 +207,6 @@ jobs:
       with:
         path: .ccache
         key: ${{ matrix.config.name }}-ccache-${{ env.CACHE_PARTITION }}-${{ steps.ccache_cache_timestamp.outputs.timestamp }}
-        restore-keys: |
-          ${{ matrix.config.name }}-ccache-${{ env.CACHE_PARTITION }}-
 
     - name: Configure
       shell: bash
