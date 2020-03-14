@@ -9,7 +9,7 @@ class QtWebKitConan(ConanFile):
     description = "Qt port of WebKit"
     topics = ( "qt", "browser-engine", "webkit", "qt5", "qml", "qtwebkit" )
     settings = "os", "compiler", "build_type", "arch"
-    generators = "cmake"
+    generators = "cmake", "virtualenv"
     exports_sources = "../../*"
     no_copy_source = True
     requires = (
