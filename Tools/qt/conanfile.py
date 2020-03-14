@@ -65,6 +65,8 @@ class QtWebKitConan(ConanFile):
     def build(self):
         cmake = CMake(self)
         cmake.generator = "Ninja"
+        cmake.verbose = True
+        cmake.definitions["QT_CONAN_DIR"] = self.build_folder
 
         if self.options.use_ccache:
             cmake.definitions["CMAKE_C_COMPILER_LAUNCHER"] = "ccache"
@@ -78,7 +80,6 @@ class QtWebKitConan(ConanFile):
         print(self.build_folder)
 
         cmake.configure()
-        cmake.build(args="-v")
 
     def package(self):
         pass
