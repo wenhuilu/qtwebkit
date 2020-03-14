@@ -72,7 +72,6 @@ jobs:
 
     - name: Download Ninja and CMake
       id: cmake_and_ninja
-      if: runner.os != 'Windows'
       shell: cmake -P {0}
       run: |
         set(cmake_version "$ENV{CMAKE_VERSION}")
@@ -210,8 +209,20 @@ jobs:
         restore-keys: |
           ${{ matrix.config.name }}-ccache-${{ env.CACHE_PARTITION }}-
 
+    - name: Conan install
+      if: runner.os == 'Windows'
+      shell: bash --noprofile --norc -eo pipefail -x {0}
+      run: |
+        pip3 install conan
+        export CONAN_NON_INTERACTIVE=1 CONAN_PRINT_RUN_COMMANDS=1 CONAN_LOG_RUN_TO_OUTPUT=1
+        conan user
+        conan -v
+        conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
+        conan remote add qtproject https://api.bintray.com/conan/qtproject/conan
+        mkdir build
+        conan install --no-imports --install-folder build Tools/qt/conanfile.py
+
     - name: Configure
-      if: runner.os != 'Windows'
       shell: bash --noprofile --norc -eo pipefail -x {0}
       run: |
         if [ "${{ runner.os }}" != "Linux" ]; then
@@ -220,6 +231,9 @@ jobs:
         if [ "${{ runner.os }}" = "macOS" ]; then
             cmake_extra_args="$cmake_extra_args -DPC_WOFF2DEC_VERSION=1.0.2 \
                 -DCMAKE_PREFIX_PATH=$(brew --prefix jpeg-turbo);$(brew --prefix libpng);$(brew --prefix webp);$(brew --prefix woff2)"
+        fi
+        if [ "${{ runner.os }}" = "Windows" ]; then
+            cmake_extra_args="$cmake_extra_args -DQT_CONAN_DIR=$(pwd)/build"
         fi
 
         export PATH="$GITHUB_WORKSPACE:$PATH"
@@ -245,7 +259,6 @@ jobs:
 #        name: build.ninja
 
     - name: Build
-      if: runner.os != 'Windows'
       shell: cmake -P {0}
       run: |
         set(ENV{NINJA_STATUS} "[%f/%t %o/sec] ")
@@ -285,22 +298,6 @@ jobs:
         endif()
 
         execute_process(COMMAND ccache -s)
-
-    - name: Conan build
-      if: runner.os == 'Windows'
-      shell: bash --noprofile --norc -eo pipefail -x {0}
-      run: |
-        pip3 install conan
-        export CONAN_NON_INTERACTIVE=1 CONAN_PRINT_RUN_COMMANDS=1 CONAN_LOG_RUN_TO_OUTPUT=1
-        conan user
-        conan -v
-        conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
-        conan remote add qtproject https://api.bintray.com/conan/qtproject/conan
-        conan create \
-            -s "build_type=${{ matrix.config.build_type }}" \
-            -o "use_ccache=True" \
-            -o "qt5_dir=${{ steps.qt.outputs.qt_dir }}/lib/cmake/Qt5" \
-            Tools/qt/conanfile.py
 
 #        conan profile show default
 #        conan profile update "settings.build_type=${{ matrix.config.build_type }}" default

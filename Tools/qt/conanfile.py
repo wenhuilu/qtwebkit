@@ -12,10 +12,6 @@ class QtWebKitConan(ConanFile):
     generators = "cmake"
     exports_sources = "../../*"
     no_copy_source = True
-    options = {
-        "use_ccache": [True, False],
-        "qt5_dir": "ANY"
-    }
     requires = (
         "icu/65.1@qtproject/stable",
         "libxml2/2.9.10@qtproject/stable",
@@ -25,10 +21,6 @@ class QtWebKitConan(ConanFile):
 
         "libpng/1.6.37",
         "sqlite3/3.31.1"
-    )
-    build_requires = (
-        "ninja/1.9.0",
-        "cmake/3.16.4"
     )
     default_options = {
         "icu:shared": True,
@@ -43,6 +35,15 @@ class QtWebKitConan(ConanFile):
 
         "libjpeg-turbo:shared": False
     }
+# For building with conan
+#    options = {
+#        "use_ccache": [True, False],
+#        "qt5_dir": "ANY"
+#    }
+#    build_requires = (
+#        "ninja/1.9.0",
+#        "cmake/3.16.4"
+#    )
 
     def build_requirements(self):
         if self.settings.os == 'Linux':
