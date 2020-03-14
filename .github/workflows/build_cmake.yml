@@ -209,18 +209,22 @@ jobs:
         restore-keys: |
           ${{ matrix.config.name }}-ccache-${{ env.CACHE_PARTITION }}-
 
-    - name: Conan install
+    # For Conan
+    - uses: actions/setup-python@v1
       if: runner.os == 'Windows'
-      shell: bash --noprofile --norc -eo pipefail -x {0}
+      with:
+        python-version: '3.7'
+
+    - name: Install conan
+      if: runner.os == 'Windows'
       run: |
         pip3 install conan
-        export CONAN_NON_INTERACTIVE=1 CONAN_PRINT_RUN_COMMANDS=1 CONAN_LOG_RUN_TO_OUTPUT=1
-        conan user
-        conan -v
-        conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
-        conan remote add qtproject https://api.bintray.com/conan/qtproject/conan
-        mkdir build
-        conan install --no-imports --install-folder build Tools/qt/conanfile.py
+
+    - name: Dump environment script
+      if: runner.os == 'Windows' && matrix.config.environment_script != ''
+      shell: cmd
+      run: |
+        "${{ matrix.config.environment_script }}" && set > environment_script_output.txt
 
     - name: Configure
       shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -233,7 +237,15 @@ jobs:
                 -DCMAKE_PREFIX_PATH=$(brew --prefix jpeg-turbo);$(brew --prefix libpng);$(brew --prefix webp);$(brew --prefix woff2)"
         fi
         if [ "${{ runner.os }}" = "Windows" ]; then
-            cmake_extra_args="$cmake_extra_args -DQT_CONAN_DIR=$(pwd)/build"
+            cmake_extra_args="$cmake_extra_args -DRUN_CONAN=ON"
+
+            if [ -f environment_script_output.txt ]; then
+                echo "=========== environment_script_output.txt ==========="
+                perl -ne '/^([a-zA-Z0-9_-]+)=(.*)\r$/ && print "export $1='\''$2'\''\n"' -i environment_script_output.txt
+                cat environment_script_output.txt
+                echo "=========== environment_script_output.txt ==========="
+                source environment_script_output.txt
+            fi
         fi
 
         export PATH="$GITHUB_WORKSPACE:$PATH"
