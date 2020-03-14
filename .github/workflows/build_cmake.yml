@@ -29,16 +29,11 @@ jobs:
       matrix:
         config:
         - {
-            name: "Ubuntu GCC Release", artifact: "Linux",
-            os: ubuntu-latest,
+            name: "Windows MSVC Conan Release", artifact: "Windows-MSVC",
+            os: windows-latest,
             build_type: Release,
-            cc: "gcc", cxx: "g++"
-          }
-        - {
-            name: "macOS Clang Release", artifact: "macOS",
-            os: macos-latest,
-            build_type: Release,
-            cc: "clang", cxx: "clang++"
+            cc: "cl", cxx: "cl",
+            environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
           }
 
     steps:
@@ -77,6 +72,7 @@ jobs:
 
     - name: Download Ninja and CMake
       id: cmake_and_ninja
+      if: runner.os != 'Windows'
       shell: cmake -P {0}
       run: |
         set(cmake_version "$ENV{CMAKE_VERSION}")
@@ -215,6 +211,7 @@ jobs:
           ${{ matrix.config.name }}-ccache-${{ env.CACHE_PARTITION }}-
 
     - name: Configure
+      if: runner.os != 'Windows'
       shell: bash --noprofile --norc -eo pipefail -x {0}
       run: |
         if [ "${{ runner.os }}" != "Linux" ]; then
@@ -248,6 +245,7 @@ jobs:
 #        name: build.ninja
 
     - name: Build
+      if: runner.os != 'Windows'
       shell: cmake -P {0}
       run: |
         set(ENV{NINJA_STATUS} "[%f/%t %o/sec] ")
@@ -287,3 +285,26 @@ jobs:
         endif()
 
         execute_process(COMMAND ccache -s)
+
+    - name: Conan build
+      if: runner.os == 'Windows'
+      shell: bash --noprofile --norc -eo pipefail -x {0}
+      run: |
+        pip3 install conan
+        export CONAN_NON_INTERACTIVE=1 CONAN_PRINT_RUN_COMMANDS=1 CONAN_LOG_RUN_TO_OUTPUT=1
+        conan user
+        conan -v
+        conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
+        conan remote add qtproject https://api.bintray.com/conan/qtproject/conan
+        conan create \
+            -s "build_type=${{ matrix.config.build_type }}" \
+            -o "use_ccache=True" \
+            -o "qt5_dir=${{ steps.qt.outputs.qt_dir }}/lib/cmake/Qt5" \
+            Tools/qt/conanfile.py
+
+#        conan profile show default
+#        conan profile update "settings.build_type=${{ matrix.config.build_type }}" default
+#        conan profile update "options.use_ccache=True" default
+#        conan profile update "options.qt5_dir=${{ steps.qt.outputs.qt_dir }}/lib/cmake/Qt5" default
+#        conan profile show default
+#        conan build -s "build_type=${{ matrix.config.build_type }}" --build-folder build --source-folder . Tools/qt/conanfile.py
