@@ -43,7 +43,7 @@ if (NOT HAS_RUN_WEBKIT_COMMON)
         conan_cmake_run(CONANFILE "Tools/qt/conanfile.py"
             OPTIONS ${conan_options}
             BASIC_SETUP CMAKE_TARGETS
-            BUILD outdated)
+            BUILD missing)
     endif ()
 
     find_package(BISON 2.1 REQUIRED)
