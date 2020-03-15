@@ -219,7 +219,16 @@ jobs:
       if: runner.os == 'Windows'
       run: |
         pip3 install conan
-        conan user
+        mkdir build
+        conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
+        conan remote add qtproject https://api.bintray.com/conan/qtproject/conan
+        conan install --no-imports --install-folder build Tools/qt/conanfile.py
+
+    - name: Test
+      shell: bash --noprofile --norc -eo pipefail -x {0}
+      run: |
+        cat build/activate.bat
+        cat build/environment.bat.env
 
     - name: Configure
       if: runner.os != 'Windows' || matrix.config.environment_script == ''
@@ -300,7 +309,7 @@ jobs:
             -DCMAKE_C_COMPILER_LAUNCHER=ccache
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
             -DQt5_DIR=${{ steps.qt.outputs.qt_dir }}/lib/cmake/Qt5
-            -DRUN_CONAN=ON
+            -DQT_CONAN_DIR=build
           RESULT_VARIABLE result
           COMMAND_ECHO STDOUT
         )
