@@ -13,6 +13,8 @@ if (NOT HAS_RUN_WEBKIT_COMMON)
         list(APPEND CMAKE_PROGRAM_PATH $ENV{SystemDrive}/cygwin/bin)
     endif ()
 
+    set(QT_CONAN_DIR "" CACHE PATH "Directory containing conanbuildinfo.cmake and conanfile.txt")
+
     if (RUN_CONAN)
         include(conan)
         conan_check()
@@ -42,11 +44,11 @@ if (NOT HAS_RUN_WEBKIT_COMMON)
 
         conan_cmake_run(CONANFILE "Tools/qt/conanfile.py"
             OPTIONS ${conan_options}
-            BASIC_SETUP CMAKE_TARGETS
             BUILD missing)
+
+        set(QT_CONAN_DIR "${CMAKE_BINARY_DIR}")
     endif ()
 
-    set(QT_CONAN_DIR "" CACHE PATH "Directory containing conanbuildinfo.cmake and conanfile.txt")
     if (QT_CONAN_DIR)
         message(STATUS "Using conan directory: ${QT_CONAN_DIR}")
         find_program(CONAN_COMMAND NAMES conan PATHS $ENV{PIP3_PATH})
@@ -78,7 +80,17 @@ if (NOT HAS_RUN_WEBKIT_COMMON)
                 message(\"Removed conan install manifest: \${_conan_imports_manifest}\")
             endif ()
         ")
+
+        if (WIN32 AND EXISTS "${QT_CONAN_DIR}/environment.bat.env")
+            file(STRINGS "${QT_CONAN_DIR}/environment.bat.env" env_lines)
+            foreach(line IN LISTS env_lines)
+                if (line MATCHES "^([a-zA-Z0-9_-]+)=(.*)$")
+                    set(ENV{${CMAKE_MATCH_1}} "${CMAKE_MATCH_2}")
+                endif()
+            endforeach()
+        endif ()
     endif ()
+
 
     find_package(BISON 2.1 REQUIRED)
     if (!APPLE)
