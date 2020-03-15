@@ -220,13 +220,8 @@ jobs:
       run: |
         pip3 install conan
 
-    - name: Dump environment script
-      if: runner.os == 'Windows' && matrix.config.environment_script != ''
-      shell: cmd
-      run: |
-        "${{ matrix.config.environment_script }}" && set > environment_script_output.txt
-
     - name: Configure
+      if: runner.os != 'Windows' || matrix.config.environment_script == ''
       shell: bash --noprofile --norc -eo pipefail -x {0}
       run: |
         if [ "${{ runner.os }}" != "Linux" ]; then
@@ -238,14 +233,6 @@ jobs:
         fi
         if [ "${{ runner.os }}" = "Windows" ]; then
             cmake_extra_args="$cmake_extra_args -DRUN_CONAN=ON"
-
-            if [ -f environment_script_output.txt ]; then
-                echo "=========== environment_script_output.txt ==========="
-                perl -ne '/^([a-zA-Z0-9_-]+)=(.*)\r$/ && print "export $1='\''$2'\''\n"' -i environment_script_output.txt
-                cat environment_script_output.txt
-                echo "=========== environment_script_output.txt ==========="
-                source environment_script_output.txt
-            fi
         fi
 
         export PATH="$GITHUB_WORKSPACE:$PATH"
@@ -259,6 +246,23 @@ jobs:
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             $cmake_extra_args
+
+    - name: Configure
+      if: runner.os == 'Windows' && matrix.config.environment_script != ''
+      shell: cmd
+      run: |
+        "${{ matrix.config.environment_script }}" && ^
+        set PATH=%GITHUB_WORKSPACE%;%$PATH% && ^
+        set CC=${{ matrix.config.cc }} && ^
+        set CXX=${{ matrix.config.cxx }} && ^
+        ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake ^
+            -H. ^
+            -Bbuild ^
+            -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} ^
+            -GNinja ^
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache ^
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache ^
+            -DRUN_CONAN=ON
 
 #    - uses: actions/upload-artifact@v1
 #      with:
