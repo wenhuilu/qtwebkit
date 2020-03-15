@@ -262,20 +262,9 @@ jobs:
       env:
         CC: ${{ matrix.config.cc }}
         CXX: ${{ matrix.config.cxx }}
-      shell: cmd
+      shell: bash --noprofile --norc -eo pipefail -x {0}
       run: |
-        call "${{ matrix.config.environment_script }}"
-        call build/activate.bat
-        set PATH=%GITHUB_WORKSPACE%;%$PATH%
-        ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake ^
-            -H. ^
-            -Bbuild ^
-            -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} ^
-            -GNinja ^
-            -DCMAKE_C_COMPILER_LAUNCHER=ccache ^
-            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache ^
-            -DQt5_DIR=${{ steps.qt.outputs.qt_dir }}/lib/cmake/Qt5
-            -DQT_CONAN_DIR=build
+        ./.github/msvc-configure.bat
 
 #    - name: Configure
 #      if: runner.os == 'Windows' && matrix.config.environment_script != ''
@@ -331,46 +320,46 @@ jobs:
 #        path: build/build.ninja
 #        name: build.ninja
 
-    - name: Build
-      shell: cmake -P {0}
-      run: |
-        set(ENV{NINJA_STATUS} "[%f/%t %o/sec] ")
-
-        if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
-          file(STRINGS environment_script_output.txt output_lines)
-          foreach(line IN LISTS output_lines)
-            if (line MATCHES "^([a-zA-Z0-9_-]+)=(.*)$")
-              set(ENV{${CMAKE_MATCH_1}} "${CMAKE_MATCH_2}")
-            endif()
-          endforeach()
-        endif()
-
-        set(path_separator ":")
-        if ("${{ runner.os }}" STREQUAL "Windows")
-          set(path_separator ";")
-        endif()
-        set(ENV{PATH} "$ENV{GITHUB_WORKSPACE}${path_separator}$ENV{PATH}")
-
-        file(TO_CMAKE_PATH "$ENV{GITHUB_WORKSPACE}" ccache_basedir)
-        set(ENV{CCACHE_BASEDIR} "${ccache_basedir}")
-        set(ENV{CCACHE_DIR} "${ccache_basedir}/.ccache")
-        set(ENV{CCACHE_COMPRESS} "true")
-        set(ENV{CCACHE_COMPRESSLEVEL} "6")
-        set(ENV{CCACHE_MAXSIZE} "2G")
-
-        execute_process(COMMAND ccache -p)
-        execute_process(COMMAND ccache -z)
-
-        execute_process(
-          COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake --build build -- -j $ENV{HOST_N_CORES} -v
-          RESULT_VARIABLE result
-        )
-
-        if (NOT result EQUAL 0)
-          message(FATAL_ERROR "Bad exit status")
-        endif()
-
-        execute_process(COMMAND ccache -s)
+#    - name: Build
+#      shell: cmake -P {0}
+#      run: |
+#        set(ENV{NINJA_STATUS} "[%f/%t %o/sec] ")
+#
+#        if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
+#          file(STRINGS environment_script_output.txt output_lines)
+#          foreach(line IN LISTS output_lines)
+#            if (line MATCHES "^([a-zA-Z0-9_-]+)=(.*)$")
+#              set(ENV{${CMAKE_MATCH_1}} "${CMAKE_MATCH_2}")
+#            endif()
+#          endforeach()
+#        endif()
+#
+#        set(path_separator ":")
+#        if ("${{ runner.os }}" STREQUAL "Windows")
+#          set(path_separator ";")
+#        endif()
+#        set(ENV{PATH} "$ENV{GITHUB_WORKSPACE}${path_separator}$ENV{PATH}")
+#
+#        file(TO_CMAKE_PATH "$ENV{GITHUB_WORKSPACE}" ccache_basedir)
+#        set(ENV{CCACHE_BASEDIR} "${ccache_basedir}")
+#        set(ENV{CCACHE_DIR} "${ccache_basedir}/.ccache")
+#        set(ENV{CCACHE_COMPRESS} "true")
+#        set(ENV{CCACHE_COMPRESSLEVEL} "6")
+#        set(ENV{CCACHE_MAXSIZE} "2G")
+#
+#        execute_process(COMMAND ccache -p)
+#        execute_process(COMMAND ccache -z)
+#
+#        execute_process(
+#          COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake --build build -- -j $ENV{HOST_N_CORES} -v
+#          RESULT_VARIABLE result
+#        )
+#
+#        if (NOT result EQUAL 0)
+#          message(FATAL_ERROR "Bad exit status")
+#        endif()
+#
+#        execute_process(COMMAND ccache -s)
 
 #        conan profile show default
 #        conan profile update "settings.build_type=${{ matrix.config.build_type }}" default
