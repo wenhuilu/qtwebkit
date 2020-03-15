@@ -53,22 +53,6 @@ jobs:
           }
 
     steps:
-    - name: Setenv
-      shell: bash --noprofile --norc -eo pipefail -x {0}
-      run: |
-        echo "::add-path::$GITHUB_WORKSPACE"
-
-        echo "::set-env name=CCACHE_BASEDIR::$GITHUB_WORKSPACE"
-        echo "::set-env name=CCACHE_DIR::$GITHUB_WORKSPACE/.ccache"
-
-        echo "::set-env name=cmake_common_args::\
-            -H. \
-            -Bbuild \
-            -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} \
-            -GNinja \
-            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
-            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache"
-
     - name: Sparse checkout
       shell: bash --noprofile --norc -eo pipefail -x {0}
       run: |
@@ -257,13 +241,14 @@ jobs:
         conan remote add qtproject https://api.bintray.com/conan/qtproject/conan
         conan install --no-imports --install-folder build Tools/qt/conanfile.py
 
-    - name: Configure
-      if: runner.os != 'Windows' || matrix.config.environment_script == ''
-      env:
-        CC: ${{ matrix.config.cc }}
-        CXX: ${{ matrix.config.cxx }}
+    - name: Setenv
       shell: bash --noprofile --norc -eo pipefail -x {0}
       run: |
+        echo "::add-path::$GITHUB_WORKSPACE"
+
+        echo "::set-env name=CCACHE_BASEDIR::$GITHUB_WORKSPACE"
+        echo "::set-env name=CCACHE_DIR::$GITHUB_WORKSPACE/.ccache"
+
         if [ "${{ runner.os }}" != "Linux" ]; then
             cmake_extra_args="-DQt5_DIR=${{ steps.qt.outputs.qt_dir }}/lib/cmake/Qt5"
         fi
@@ -275,7 +260,23 @@ jobs:
             cmake_extra_args="$cmake_extra_args -DQT_CONAN_DIR=build"
         fi
 
-        ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake $cmake_common_args $cmake_extra_args
+        echo "::set-env name=cmake_command::${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake \
+            -H. \
+            -Bbuild \
+            -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} \
+            -GNinja \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            $cmake_extra_args"
+
+    - name: Configure
+      if: runner.os != 'Windows' || matrix.config.environment_script == ''
+      env:
+        CC: ${{ matrix.config.cc }}
+        CXX: ${{ matrix.config.cxx }}
+      shell: bash --noprofile --norc -eo pipefail -x {0}
+      run: |
+        $cmake_command
 
     - name: Configure
       if: runner.os == 'Windows' && matrix.config.environment_script != ''
@@ -286,7 +287,7 @@ jobs:
       run: |
         call "${{ matrix.config.environment_script }}"
         call "build/activate.bat"
-        ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake %cmake_common_args% -DQT_CONAN_DIR=build
+        %cmake_command%
 
 #    - uses: actions/upload-artifact@v1
 #      with:
