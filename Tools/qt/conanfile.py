@@ -53,10 +53,10 @@ class QtWebKitConan(ConanFile):
         # gperf python perl bison ruby flex
         if not tools.which("gperf"):
             self.build_requires("gperf_installer/3.1@conan/stable")
-        if not tools.which("perl"):
-            self.build_requires("strawberryperl/5.30.0.1")
-        if not tools.which("ruby"):
-            self.build_requires("ruby_installer/2.6.3@bincrafters/stable")
+        #if not tools.which("perl"):
+        self.build_requires("strawberryperl/5.30.0.1")
+        #if not tools.which("ruby"):
+        self.build_requires("ruby_installer/2.6.3@bincrafters/stable")
         if not tools.which("bison"):
             self.build_requires("bison_installer/3.3.2@bincrafters/stable")
         if not tools.which("flex"):
