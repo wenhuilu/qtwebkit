@@ -941,7 +941,7 @@ if (MSVC)
         endforeach ()
     endif ()
 
-    if (NOT QT_CONAN_DIR)
+    if (NOT QT_CONAN_DIR AND NOT RUN_CONAN)
         set(ICU_LIBRARIES ${ICU_LIBRARY_PREFIX}icuuc${CMAKE_DEBUG_POSTFIX} ${ICU_LIBRARY_PREFIX}icuin${CMAKE_DEBUG_POSTFIX} ${ICU_LIBRARY_PREFIX}icudt${CMAKE_DEBUG_POSTFIX})
     endif ()
 endif ()
