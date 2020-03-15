@@ -33,6 +33,18 @@ jobs:
       matrix:
         config:
         - {
+            name: "Ubuntu GCC Release", artifact: "Linux",
+            os: ubuntu-latest,
+            build_type: Release,
+            cc: "gcc", cxx: "g++"
+          }
+        - {
+            name: "macOS Clang Release", artifact: "macOS",
+            os: macos-latest,
+            build_type: Release,
+            cc: "clang", cxx: "clang++"
+          }
+        - {
             name: "Windows MSVC Conan Release", artifact: "Windows-MSVC",
             os: windows-latest,
             build_type: Release,
@@ -41,6 +53,10 @@ jobs:
           }
 
     steps:
+    - name: Setenv
+      shell: bash --noprofile --norc -eo pipefail -x {0}
+      run: echo "::add-path::$GITHUB_WORKSPACE"
+
     - name: Sparse checkout
       shell: bash --noprofile --norc -eo pipefail -x {0}
       run: |
@@ -247,8 +263,6 @@ jobs:
             cmake_extra_args="$cmake_extra_args -DQT_CONAN_DIR=build"
         fi
 
-        export PATH="$GITHUB_WORKSPACE:$PATH"
-
         ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake \
             -H. \
             -Bbuild \
@@ -265,11 +279,8 @@ jobs:
         CXX: ${{ matrix.config.cxx }}
       shell: cmd
       run: |
-        echo on
-        set PATH=%GITHUB_WORKSPACE%;%PATH%
         call "${{ matrix.config.environment_script }}"
         call "build/activate.bat"
-        echo on
         ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake ^
             -H. ^
             -Bbuild ^
@@ -281,18 +292,23 @@ jobs:
             -DQT_CONAN_DIR=build
 
     - name: Build
+      if: runner.os != 'Windows' || matrix.config.environment_script == ''
+      shell: bash --noprofile --norc -eo pipefail -x {0}
+      run: |
+        ccache -p
+        ccache -z
+        ninja -C build -j $HOST_N_CORES -v
+        ccache -s
+
+    - name: Build
       if: runner.os == 'Windows' && matrix.config.environment_script != ''
       shell: cmd
       run: |
-        echo on
-        set PATH=%GITHUB_WORKSPACE%;%PATH%
-        cd build
         call "${{ matrix.config.environment_script }}"
-        call "activate.bat"
-        echo on
+        call "build/activate.bat"
         ccache -p
         ccache -z
-        ninja -j %HOST_N_CORES% -v || exit /b 1
+        ninja -C build -j %HOST_N_CORES% -v || exit /b 1
         ccache -s
 
 #    - name: Configure
