@@ -13,6 +13,39 @@ if (NOT HAS_RUN_WEBKIT_COMMON)
         list(APPEND CMAKE_PROGRAM_PATH $ENV{SystemDrive}/cygwin/bin)
     endif ()
 
+    if (RUN_CONAN)
+        include(conan)
+        conan_check()
+        conan_add_remote(NAME qtproject   INDEX 0 URL https://api.bintray.com/conan/qtproject/conan)
+        conan_add_remote(NAME bincrafters INDEX 1 URL https://api.bintray.com/conan/bincrafters/public-conan)
+
+        # TODO: Add optional dependencies for ENABLE_WEBP, etc.
+        # TODO: Change default icu:data_packaging
+        if (NOT QT_STATIC_BUILD)
+            set(conan_options
+                icu:shared=True
+                icu:data_packaging=library
+                libxml2:shared=True
+                libxml2:iconv=False
+                libxml2:icu=True
+                libxslt:shared=True
+                libjpeg-turbo:shared=False
+                zlib:shared=False
+                libpng:shared=False
+                sqlite3:shared=False
+            )
+        else ()
+            set(conan_options
+                icu:data_packaging=library
+            )
+        endif ()
+
+        conan_cmake_run(CONANFILE "Tools/qt/conanfile.py"
+            OPTIONS ${conan_options}
+            BASIC_SETUP CMAKE_TARGETS
+            BUILD outdated)
+    endif ()
+
     find_package(BISON 2.1 REQUIRED)
     if (!APPLE)
         find_package(FLEX 2.5.34 REQUIRED)

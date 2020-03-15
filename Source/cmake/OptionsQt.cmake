@@ -11,39 +11,6 @@ set(PROJECT_VERSION_PATCH 0)
 set(PROJECT_VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH})
 set(PROJECT_VERSION_STRING "${PROJECT_VERSION}")
 
-if (RUN_CONAN)
-    include(conan)
-    conan_check()
-    conan_add_remote(NAME qtproject   INDEX 0 URL https://api.bintray.com/conan/qtproject/conan)
-    conan_add_remote(NAME bincrafters INDEX 1 URL https://api.bintray.com/conan/bincrafters/public-conan)
-
-    # TODO: Add optional dependencies for ENABLE_WEBP, etc.
-    # TODO: Change default icu:data_packaging
-    if (NOT QT_STATIC_BUILD)
-        set(conan_options
-            icu:shared=True
-            icu:data_packaging=library
-            libxml2:shared=True
-            libxml2:iconv=False
-            libxml2:icu=True
-            libxslt:shared=True
-            libjpeg-turbo:shared=False
-            zlib:shared=False
-            libpng:shared=False
-            sqlite3:shared=False
-        )
-    else ()
-        set(conan_options
-            icu:data_packaging=library
-        )
-    endif ()
-
-    conan_cmake_run(CONANFILE "${CMAKE_SOURCE_DIR}/Tools/qt/conanfile.py"
-        OPTIONS ${conan_options}
-        BASIC_SETUP CMAKE_TARGETS
-        BUILD outdated)
-endif ()
-
 set(QT_CONAN_DIR "" CACHE PATH "Directory containing conanbuildinfo.cmake and conanfile.txt")
 if (QT_CONAN_DIR)
     find_program(CONAN_COMMAND NAMES conan PATHS $ENV{PIP3_PATH})

@@ -219,6 +219,7 @@ jobs:
       if: runner.os == 'Windows'
       run: |
         pip3 install conan
+        conan user
 
     - name: Configure
       if: runner.os != 'Windows' || matrix.config.environment_script == ''
