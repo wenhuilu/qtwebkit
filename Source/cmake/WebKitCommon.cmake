@@ -16,8 +16,8 @@ if (NOT HAS_RUN_WEBKIT_COMMON)
     if (RUN_CONAN)
         include(conan)
         conan_check()
-        conan_add_remote(NAME qtproject   INDEX 0 URL https://api.bintray.com/conan/qtproject/conan)
-        conan_add_remote(NAME bincrafters INDEX 1 URL https://api.bintray.com/conan/bincrafters/public-conan)
+        conan_add_remote(NAME bincrafters URL https://api.bintray.com/conan/bincrafters/public-conan)
+        conan_add_remote(NAME qtproject   URL https://api.bintray.com/conan/qtproject/conan)
 
         # TODO: Add optional dependencies for ENABLE_WEBP, etc.
         # TODO: Change default icu:data_packaging
