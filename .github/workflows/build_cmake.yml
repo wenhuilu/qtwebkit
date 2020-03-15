@@ -55,7 +55,19 @@ jobs:
     steps:
     - name: Setenv
       shell: bash --noprofile --norc -eo pipefail -x {0}
-      run: echo "::add-path::$GITHUB_WORKSPACE"
+      run: |
+        echo "::add-path::$GITHUB_WORKSPACE"
+
+        echo "::set-env name=CCACHE_BASEDIR::$GITHUB_WORKSPACE"
+        echo "::set-env name=CCACHE_DIR::$GITHUB_WORKSPACE/.ccache"
+
+        echo "::set-env name=cmake_common_args::\
+            -H. \
+            -Bbuild \
+            -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} \
+            -GNinja \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache"
 
     - name: Sparse checkout
       shell: bash --noprofile --norc -eo pipefail -x {0}
@@ -263,14 +275,7 @@ jobs:
             cmake_extra_args="$cmake_extra_args -DQT_CONAN_DIR=build"
         fi
 
-        ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake \
-            -H. \
-            -Bbuild \
-            -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} \
-            -GNinja \
-            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
-            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            $cmake_extra_args
+        ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake $cmake_common_args $cmake_extra_args
 
     - name: Configure
       if: runner.os == 'Windows' && matrix.config.environment_script != ''
@@ -281,15 +286,17 @@ jobs:
       run: |
         call "${{ matrix.config.environment_script }}"
         call "build/activate.bat"
-        ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake ^
-            -H. ^
-            -Bbuild ^
-            -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} ^
-            -GNinja ^
-            -DCMAKE_C_COMPILER_LAUNCHER=ccache ^
-            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache ^
-            -DQt5_DIR=${{ steps.qt.outputs.qt_dir }}/lib/cmake/Qt5 ^
-            -DQT_CONAN_DIR=build
+        ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake %cmake_common_args% -DQT_CONAN_DIR=build
+
+#    - uses: actions/upload-artifact@v1
+#      with:
+#        path: build/CMakeCache.txt
+#        name: CMakeCache.txt
+#
+#    - uses: actions/upload-artifact@v1
+#      with:
+#        path: build/build.ninja
+#        name: build.ninja
 
     - name: Build
       if: runner.os != 'Windows' || matrix.config.environment_script == ''
@@ -310,105 +317,3 @@ jobs:
         ccache -z
         ninja -C build -j %HOST_N_CORES% -v || exit /b 1
         ccache -s
-
-#    - name: Configure
-#      if: runner.os == 'Windows' && matrix.config.environment_script != ''
-#      shell: cmake -P {0}
-#      run: |
-#        set(ENV{CC} ${{ matrix.config.cc }})
-#        set(ENV{CXX} ${{ matrix.config.cxx }})
-#
-#        if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
-#          execute_process(
-#            COMMAND "${{ matrix.config.environment_script }}" && set
-#            OUTPUT_FILE environment_script_output.txt
-#          )
-#          file(STRINGS environment_script_output.txt output_lines)
-#          foreach(line IN LISTS output_lines)
-#            if (line MATCHES "^([a-zA-Z0-9_-]+)=(.*)$")
-#              set(ENV{${CMAKE_MATCH_1}} "${CMAKE_MATCH_2}")
-#            endif()
-#          endforeach()
-#        endif()
-#
-#        set(path_separator ":")
-#        if ("${{ runner.os }}" STREQUAL "Windows")
-#          set(path_separator ";")
-#        endif()
-#        set(ENV{PATH} "$ENV{GITHUB_WORKSPACE}${path_separator}$ENV{PATH}")
-#
-#        execute_process(
-#          COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake
-#            -H.
-#            -Bbuild
-#            -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }}
-#            -GNinja
-#            -DCMAKE_C_COMPILER_LAUNCHER=ccache
-#            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
-#            -DQt5_DIR=${{ steps.qt.outputs.qt_dir }}/lib/cmake/Qt5
-#            -DQT_CONAN_DIR=build
-#          RESULT_VARIABLE result
-#          COMMAND_ECHO STDOUT
-#        )
-#        if (NOT result EQUAL 0)
-#          message(FATAL_ERROR "Bad exit status")
-#        endif()
-
-
-#    - uses: actions/upload-artifact@v1
-#      with:
-#        path: build/CMakeCache.txt
-#        name: CMakeCache.txt
-#
-#    - uses: actions/upload-artifact@v1
-#      with:
-#        path: build/build.ninja
-#        name: build.ninja
-
-#    - name: Build
-#      shell: cmake -P {0}
-#      run: |
-#        set(ENV{NINJA_STATUS} "[%f/%t %o/sec] ")
-#
-#        if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
-#          file(STRINGS environment_script_output.txt output_lines)
-#          foreach(line IN LISTS output_lines)
-#            if (line MATCHES "^([a-zA-Z0-9_-]+)=(.*)$")
-#              set(ENV{${CMAKE_MATCH_1}} "${CMAKE_MATCH_2}")
-#            endif()
-#          endforeach()
-#        endif()
-#
-#        set(path_separator ":")
-#        if ("${{ runner.os }}" STREQUAL "Windows")
-#          set(path_separator ";")
-#        endif()
-#        set(ENV{PATH} "$ENV{GITHUB_WORKSPACE}${path_separator}$ENV{PATH}")
-#
-#        file(TO_CMAKE_PATH "$ENV{GITHUB_WORKSPACE}" ccache_basedir)
-#        set(ENV{CCACHE_BASEDIR} "${ccache_basedir}")
-#        set(ENV{CCACHE_DIR} "${ccache_basedir}/.ccache")
-#        set(ENV{CCACHE_COMPRESS} "true")
-#        set(ENV{CCACHE_COMPRESSLEVEL} "6")
-#        set(ENV{CCACHE_MAXSIZE} "2G")
-#
-#        execute_process(COMMAND ccache -p)
-#        execute_process(COMMAND ccache -z)
-#
-#        execute_process(
-#          COMMAND ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake --build build -- -j $ENV{HOST_N_CORES} -v
-#          RESULT_VARIABLE result
-#        )
-#
-#        if (NOT result EQUAL 0)
-#          message(FATAL_ERROR "Bad exit status")
-#        endif()
-#
-#        execute_process(COMMAND ccache -s)
-
-#        conan profile show default
-#        conan profile update "settings.build_type=${{ matrix.config.build_type }}" default
-#        conan profile update "options.use_ccache=True" default
-#        conan profile update "options.qt5_dir=${{ steps.qt.outputs.qt_dir }}/lib/cmake/Qt5" default
-#        conan profile show default
-#        conan build -s "build_type=${{ matrix.config.build_type }}" --build-folder build --source-folder . Tools/qt/conanfile.py
