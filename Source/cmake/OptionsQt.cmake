@@ -11,39 +11,6 @@ set(PROJECT_VERSION_PATCH 0)
 set(PROJECT_VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH})
 set(PROJECT_VERSION_STRING "${PROJECT_VERSION}")
 
-set(QT_CONAN_DIR "" CACHE PATH "Directory containing conanbuildinfo.cmake and conanfile.txt")
-if (QT_CONAN_DIR)
-    find_program(CONAN_COMMAND NAMES conan PATHS $ENV{PIP3_PATH})
-    if (NOT CONAN_COMMAND)
-        message(FATAL_ERROR "conan executable not found. Make sure that Conan is installed and available in PATH")
-    endif ()
-    include("${QT_CONAN_DIR}/conanbuildinfo.cmake")
-    conan_basic_setup(TARGETS)
-
-    install(CODE "
-        set(_conan_imports_dest \${CMAKE_INSTALL_PREFIX})
-        if (DEFINED ENV{DESTDIR})
-            get_filename_component(_absolute_destdir \$ENV{DESTDIR} ABSOLUTE)
-            string(REGEX REPLACE \"^[A-z]:\" \"\" _conan_imports_dest \${CMAKE_INSTALL_PREFIX})
-            set(_conan_imports_dest \"\${_absolute_destdir}\${_conan_imports_dest}\")
-        endif ()
-
-        message(\"Importing dependencies from conan to \${_conan_imports_dest}\")
-        execute_process(
-            COMMAND \"${CONAN_COMMAND}\" imports --import-folder \${_conan_imports_dest} \"${QT_CONAN_DIR}/conanfile.txt\"
-            WORKING_DIRECTORY \"${QT_CONAN_DIR}\"
-            RESULT_VARIABLE _conan_imports_result
-        )
-        message(\"conan imports result: \${_conan_imports_result}\")
-
-        set(_conan_imports_manifest \"\${_conan_imports_dest}/conan_imports_manifest.txt\")
-        if (EXISTS \${_conan_imports_manifest})
-            file(REMOVE \${_conan_imports_manifest})
-            message(\"Removed conan install manifest: \${_conan_imports_manifest}\")
-        endif ()
-    ")
-endif ()
-
 set(STATIC_DEPENDENCIES_CMAKE_FILE "${CMAKE_BINARY_DIR}/QtStaticDependencies.cmake")
 if (EXISTS ${STATIC_DEPENDENCIES_CMAKE_FILE})
     file(REMOVE ${STATIC_DEPENDENCIES_CMAKE_FILE})
