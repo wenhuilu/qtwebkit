@@ -19,6 +19,10 @@ env:
   CCACHE_VERSION: 3.7.7
   CACHE_PARTITION: 5.212
   HOST_N_CORES: 2
+  NINJA_STATUS: "[%f/%t %o/sec] "
+  CCACHE_COMPRESS: "true"
+  CCACHE_COMPRESSLEVEL: "6"
+  CCACHE_MAXSIZE: "2G"
 
 jobs:
   build:
@@ -209,8 +213,27 @@ jobs:
         restore-keys: |
           ${{ matrix.config.name }}-ccache-${{ env.CACHE_PARTITION }}-
 
+    # For Conan
+    - uses: actions/setup-python@v1
+      if: runner.os == 'Windows'
+      with:
+        python-version: '3.7'
+
+    - name: Conan install
+      if: runner.os == 'Windows'
+      shell: cmd
+      run: |
+        pip3 install conan
+        mkdir build
+        conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
+        conan remote add qtproject https://api.bintray.com/conan/qtproject/conan
+        conan install --no-imports --install-folder build Tools/qt/conanfile.py
+
     - name: Configure
       if: runner.os != 'Windows' || matrix.config.environment_script == ''
+      env:
+        CC: ${{ matrix.config.cc }}
+        CXX: ${{ matrix.config.cxx }}
       shell: bash --noprofile --norc -eo pipefail -x {0}
       run: |
         if [ "${{ runner.os }}" != "Linux" ]; then
@@ -221,12 +244,11 @@ jobs:
                 -DCMAKE_PREFIX_PATH=$(brew --prefix jpeg-turbo);$(brew --prefix libpng);$(brew --prefix webp);$(brew --prefix woff2)"
         fi
         if [ "${{ runner.os }}" = "Windows" ]; then
-            cmake_extra_args="$cmake_extra_args -DRUN_CONAN=ON"
+            cmake_extra_args="$cmake_extra_args -DQT_CONAN_DIR=build"
         fi
 
         export PATH="$GITHUB_WORKSPACE:$PATH"
 
-        CC=${{ matrix.config.cc }} CXX=${{ matrix.config.cxx }} \
         ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake \
             -H. \
             -Bbuild \
@@ -235,28 +257,6 @@ jobs:
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             $cmake_extra_args
-
-    # For Conan
-    - uses: actions/setup-python@v1
-      if: runner.os == 'Windows'
-      with:
-        python-version: '3.7'
-
-    - name: Install conan
-      if: runner.os == 'Windows'
-      shell: cmd
-      run: |
-        pip3 install conan
-        mkdir build
-        conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
-        conan remote add qtproject https://api.bintray.com/conan/qtproject/conan
-        conan install --no-imports --install-folder build Tools/qt/conanfile.py
-
-    - name: Test
-      shell: bash --noprofile --norc -eo pipefail -x {0}
-      run: |
-        cat build/activate.bat
-        cat build/environment.bat.env
 
     - name: Configure
       if: runner.os == 'Windows' && matrix.config.environment_script != ''
@@ -267,17 +267,18 @@ jobs:
       run: |
         echo on
         set PATH=%GITHUB_WORKSPACE%;%PATH%
-        cd build
-        call "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
-        call "activate.bat"
+        call "${{ matrix.config.environment_script }}"
+        call "build/activate.bat"
         echo on
-        ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake .. ^
+        ${{ steps.cmake_and_ninja.outputs.cmake_dir }}/cmake ^
+            -H. ^
+            -Bbuild ^
             -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} ^
             -GNinja ^
             -DCMAKE_C_COMPILER_LAUNCHER=ccache ^
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache ^
             -DQt5_DIR=${{ steps.qt.outputs.qt_dir }}/lib/cmake/Qt5 ^
-            -DQT_CONAN_DIR=.
+            -DQT_CONAN_DIR=build
 
     - name: Build
       if: runner.os == 'Windows' && matrix.config.environment_script != ''
