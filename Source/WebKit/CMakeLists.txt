@@ -55,6 +55,9 @@ set(WebKit_PRIVATE_HEADERS_LOCATION Headers/${PROJECT_VERSION}/QtWebKit/private)
 WEBKIT_FRAMEWORK(WebKit)
 
 if (${PORT} STREQUAL "Qt")
+    # WebKit2 is linked as whole archive so CMake may not track dependency
+    add_dependencies(WebKit WebKit2)
+
     set_target_properties(WebKit PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
     install(TARGETS WebKit EXPORT WebKitTargets
             DESTINATION "${LIB_INSTALL_DIR}"
