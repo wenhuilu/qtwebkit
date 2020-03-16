@@ -45,8 +45,6 @@ if (MSVC)
         ADD_PRECOMPILED_HEADER("WebKitPrefix.h" "win/WebKitPrefix.cpp" WebKit_SOURCES)
         list(APPEND WebKit_SOURCES win/WebKit.resources/WebKit.rc)
         add_definitions(/DWEBKIT_EXPORTS /DFRAMEWORK_NAME=WebKit)
-    else ()
-        ADD_PRECOMPILED_HEADER("WebKitPrefix.h" "qt/WebKitPrefix.cpp" WebKit_SOURCES)
     endif ()
 endif ()
 
@@ -72,9 +70,7 @@ if (${PORT} STREQUAL "Qt")
         install(FILES ${WebKit_DEBUG_INFO} DESTINATION "${LIB_INSTALL_DIR}" OPTIONAL)
     endif ()
 
-    if (NOT MSVC)
-        ADD_PREFIX_HEADER(WebKit "${WEBKIT_DIR}/qt/WebKitPrefix.h")
-    endif ()
+    ADD_PREFIX_HEADER(WebKit "${WEBKIT_DIR}/qt/WebKitPrefix.h")
 
     if (MACOS_BUILD_FRAMEWORKS)
         set_target_properties(WebKit PROPERTIES

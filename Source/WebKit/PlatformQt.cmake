@@ -834,8 +834,6 @@ if (MSVC)
     list(APPEND WebKit_INCLUDE_DIRECTORIES
         ${DERIVED_SOURCES_WEBKIT_DIR}
     )
-
-    ADD_PRECOMPILED_HEADER("WebKitWidgetsPrefix.h" "qt/WebKitWidgetsPrefix.cpp" WebKitWidgets_SOURCES)
 endif ()
 
 if (QT_STATIC_BUILD)
@@ -862,7 +860,7 @@ if (SEPARATE_DEBUG_INFO)
     install(FILES ${WebKitWidgets_DEBUG_INFO} DESTINATION "${LIB_INSTALL_DIR}" OPTIONAL)
 endif ()
 
-if (NOT MSVC AND WIN32)
+if (WIN32)
     ADD_PREFIX_HEADER(WebKitWidgets "qt/WebKitWidgetsPrefix.h")
 endif ()
 
