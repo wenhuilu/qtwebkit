@@ -241,10 +241,13 @@ jobs:
         conan remote add qtproject https://api.bintray.com/conan/qtproject/conan
         conan install --no-imports --install-folder build Tools/qt/conanfile.py
 
-    - name: Setenv
+    - name: CMake environment
       shell: bash --noprofile --norc -eo pipefail -x {0}
       run: |
         echo "::add-path::$GITHUB_WORKSPACE"
+
+        echo "::set-env name=CC::${{ matrix.config.cc }}"
+        echo "::set-env name=CXX::${{ matrix.config.cxx }}"
 
         echo "::set-env name=CCACHE_BASEDIR::$GITHUB_WORKSPACE"
         echo "::set-env name=CCACHE_DIR::$GITHUB_WORKSPACE/.ccache"
@@ -269,20 +272,14 @@ jobs:
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             $cmake_extra_args"
 
-    - name: Configure
+    - name: Configure (Unix-like)
       if: runner.os != 'Windows' || matrix.config.environment_script == ''
-      env:
-        CC: ${{ matrix.config.cc }}
-        CXX: ${{ matrix.config.cxx }}
       shell: bash --noprofile --norc -eo pipefail -x {0}
       run: |
         $cmake_command
 
-    - name: Configure
+    - name: Configure (MSVC)
       if: runner.os == 'Windows' && matrix.config.environment_script != ''
-      env:
-        CC: ${{ matrix.config.cc }}
-        CXX: ${{ matrix.config.cxx }}
       shell: cmd
       run: |
         call "${{ matrix.config.environment_script }}"
@@ -299,22 +296,26 @@ jobs:
 #        path: build/build.ninja
 #        name: build.ninja
 
-    - name: Build
-      if: runner.os != 'Windows' || matrix.config.environment_script == ''
+    - name: ccache configuration
       shell: bash --noprofile --norc -eo pipefail -x {0}
       run: |
         ccache -p
         ccache -z
-        ninja -C build -j $HOST_N_CORES -v
-        ccache -s
 
-    - name: Build
+    - name: Build (Unix-like)
+      if: runner.os != 'Windows' || matrix.config.environment_script == ''
+      shell: bash --noprofile --norc -eo pipefail -x {0}
+      run: ninja -C build -j $HOST_N_CORES -v
+
+    - name: Build (MSVC)
       if: runner.os == 'Windows' && matrix.config.environment_script != ''
       shell: cmd
       run: |
         call "${{ matrix.config.environment_script }}"
         call "build/activate.bat"
-        ccache -p
-        ccache -z
         ninja -C build -j %HOST_N_CORES% -v || exit /b 1
+
+    - name: ccache stats
+      shell: bash --noprofile --norc -eo pipefail -x {0}
+      run: |
         ccache -s
