@@ -33,18 +33,6 @@ jobs:
       matrix:
         config:
         - {
-            name: "Ubuntu GCC Release", artifact: "Linux",
-            os: ubuntu-latest,
-            build_type: Release,
-            cc: "gcc", cxx: "g++"
-          }
-        - {
-            name: "macOS Clang Release", artifact: "macOS",
-            os: macos-latest,
-            build_type: Release,
-            cc: "clang", cxx: "clang++"
-          }
-        - {
             name: "Windows MSVC Conan Release", artifact: "Windows-MSVC",
             os: windows-latest,
             build_type: Release,
@@ -291,10 +279,10 @@ jobs:
 #        path: build/CMakeCache.txt
 #        name: CMakeCache.txt
 #
-#    - uses: actions/upload-artifact@v1
-#      with:
-#        path: build/build.ninja
-#        name: build.ninja
+    - uses: actions/upload-artifact@v1
+      with:
+        path: build/build.ninja
+        name: build.ninja
 
     - name: ccache configuration
       shell: bash --noprofile --norc -eo pipefail -x {0}
